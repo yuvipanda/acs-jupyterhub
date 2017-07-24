@@ -22,14 +22,14 @@
       "ssh": {
         "publicKeys": [
           {
-            "keyData": ""
+            "keyData": "KEY_DATA"
           }
         ]
       }
     },
     "servicePrincipalProfile": {
-      "servicePrincipalClientID": "",
-      "servicePrincipalClientSecret": ""
+      "servicePrincipalClientID": CLIENT_ID,
+      "servicePrincipalClientSecret": CLIENT_SECRET
     }
   }
 }
