@@ -15,12 +15,13 @@ Set up a JupyterHub with ACS
 1. Clone this repo
    `git clone https://github.com/yuvipanda/acs-jupyterhub`
    `cd acs-jupyterhub`
+1. Create a service account, saving the `az` output.
+   `az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" > rbac.json`
 1. Login with az
    `az login`
-   Identify your subscription and save its id.
-   `export SUBSCRIPTION_ID=your-subscription-id-...`
-   `az account set -s ${SUBSCRIPTION_ID}`
-1. Create service account, saving the output.
-   `az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" > rbac.json`
+   Identify your subscription and make it active.
+   `az account set -s your-subscription-id-...`
 1. Create the cluster:
-   `./start.bash <SOME_UNIQUE_CLUSTER_NAME> <PATH_TO_SSH_PUB_KEY>
+   `./start.bash <SOME_UNIQUE_CLUSTER_NAME> <PATH_TO_SSH_PUB_KEY>`
+   For example:
+   `./start.bash course-term-1 ~/.ssh/id_rsa.pub`

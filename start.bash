@@ -7,10 +7,10 @@ SSH_PUB_KEY=${2}
 if [ -z "${2}" ]; then
 	echo Usage: $0 CLUSTER_NAME PATH_TO_SSH_PUB_KEY
 	exit 1
-elif [ ! -f ${SSH_PUB_KEY} ]; echo
+elif [ ! -f ${SSH_PUB_KEY} ]; then
 	echo No such file: ${SSH_PUB_KEY}
 	exit 1
-elif [ ! -f rbac.json ]; echo
+elif [ ! -f rbac.json ]; then
 	echo No such file: rbac.json
 	exit 1
 fi
@@ -22,7 +22,7 @@ key_data="$(cat ${SSH_PUB_KEY})"
 sed -e "s/DNSPREFIX/${NAME}/" \
 	-e "s/CLIENT_ID/${client_id}/" \
 	-e "s/CLIENT_SECRET/${client_secret}/" \
-	-e "s/KEY_DATA/${key_data}/" \
+	-e "s#KEY_DATA#${key_data}#" \
 	cluster.json > ${NAME}.json
 
 # Validate json
