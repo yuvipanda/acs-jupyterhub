@@ -1,0 +1,126 @@
+- hosts: common
+  vars:
+    admin_users:
+      - ryanlovett
+      - yuvipanda
+  tasks:
+    - name: install ssh-import-id
+      apt:
+        name: ssh-import-id
+        state: installed
+      become: true
+
+    - name: create admin users
+      user:
+        name: "{{ item }}"
+        shell: /bin/bash
+        group: sudo
+      with_items: "{{ admin_users }}"
+      become: true
+
+    - name: fetch admin users ssh keys from github
+      authorized_key:
+        user: "{{ item }}"
+        state: present
+        key: "https://github.com/{{ item }}.keys"
+      with_items: "{{ admin_users }}"
+      become: true
+
+# This assumes that admin has manually created the pool, but not necessarily
+# the filesystem. For ~ RAID10 on 4 disks:
+#   for d in c d e f ; do parted /dev/sd${d} mklabel gpt ; done
+#   zpool create pool0 mirror /dev/sdc /dev/sdd
+#   zpool    add pool0 mirror /dev/sde /dev/sdf
+- hosts: nfs_servers
+  vars:
+    nfs_client_subnet: 10.240.0.0/16
+    anonuid: 1000
+    anongid: 1000
+    mount_path: /pool0/homes
+    zfs_dataset: pool0/homes
+  tasks:
+    - name: install zfsutils-linux
+      apt:
+        name: zfsutils-linux
+        state: installed
+      become: true
+
+    - name: install nfs server packages
+      apt:
+        name: nfs-kernel-server
+        state: installed
+      become: true
+
+    - name: add mount path to /etc/exports
+      lineinfile:
+        path: /etc/exports
+        line: "{{ mount_path}} {{ nfs_client_subnet }}(rw,sync,no_subtree_check,all_squash,anonuid={{ anonuid }},anongid={{ anongid }})"
+      register: exports_written
+      become: true
+
+    - name: create zfs filesystem
+      zfs:
+        name: "{{ zfs_dataset }}"
+        state: present
+      become: true
+
+    - name: gather zfs facts
+      zfs_facts:
+        dataset: "{{ zfs_dataset }}"
+        type: filesystem
+      become: true
+
+    - name: check if zfs dataset is mounted
+      fail:
+        msg: "{{ zfs_dataset }} not mounted"
+      with_items: "{{ ansible_zfs_datasets }}"
+      when: item.name == zfs_dataset and item.mounted != "yes"
+      become: true
+
+    - name: create mount path and hub data directory
+      file:
+        path: "{{ mount_path }}/datahub"
+        state: directory
+        recurse: yes
+      become: true
+
+    - name: set permissions on /export
+      file:
+        path: /export
+        state: directory
+        recurse: yes
+        owner: "{{ anongid }}"
+        group: "{{ anongid }}"
+      become: true
+
+    - name: export filesystem
+      command: /usr/sbin/exportfs -a
+      when: exports_written.changed
+      become: true
+
+- hosts: nfs_clients
+  vars:
+    nfs_server_ip: 10.240.255.5
+    nfs_server_path: /pool0/homes
+    mount_path: /mnt/homes
+  tasks:
+    - name: install nfs client packages
+      apt:
+        name: nfs-common
+        state: installed
+      become: true
+
+    - name: create mount path
+      file:
+        path: "{{ mount_path }}"
+        state: directory
+        mode: 0111
+      become: true
+
+    - name: mount nfs filesystem
+      mount:
+        path: "{{ mount_path}}"
+        src: "{{ nfs_server_ip }}:{{ nfs_server_path }}"
+        fstype: nfs
+        state: mounted
+      become: true
