@@ -25,3 +25,9 @@ Set up a JupyterHub with ACS
    `./start.bash <SOME_UNIQUE_CLUSTER_NAME> <PATH_TO_SSH_PUB_KEY>`
    For example:
    `./start.bash course-term-1 ~/.ssh/id_rsa.pub`
+
+## Scaling up
+
+1. `./scale-up.py <CLUSTER_NAME> <NEW_NODE_COUNT>`
+
+1. `az group deployment create --name ${NAME} --resource-group ${NAME} --mode Incremental --template-file ./_output/${NAME}/azuredeploy.json --parameters @./_output/${NAME}/azuredeploy.parameters.json`
