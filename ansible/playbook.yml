@@ -4,12 +4,6 @@
       - ryanlovett
       - yuvipanda
   tasks:
-    - name: install ssh-import-id
-      apt:
-        name: ssh-import-id
-        state: installed
-      become: true
-
     - name: create admin users
       user:
         name: "{{ item }}"
@@ -24,6 +18,12 @@
         state: present
         key: "https://github.com/{{ item }}.keys"
       with_items: "{{ admin_users }}"
+      become: true
+
+    - name: enable admins to sudo without password
+      lineinfile:
+        path: /etc/sudoers.d/site-admins
+        line: "%sudo ALL=(ALL:ALL) NOPASSWD:ALL"
       become: true
 
 # This assumes that admin has manually created the pool, but not necessarily
