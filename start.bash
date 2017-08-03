@@ -54,10 +54,10 @@ if [ ! -d ${arm_nfs_dir} ]; then
 	mkdir -p $arm_nfs_dir
 fi
 
-param_tmpl_file="azuredeploy.parameters.json.tmpl"
+param_tmpl_file="templates/azuredeploy.parameters.json.tmpl"
 param_file="${arm_nfs_dir}/azuredeploy.parameters.json"
-deploy_tmpl_file="azuredeploy.json.tmpl"
-deploy_file="${arm_nfs_dir}/azuredeploy.json.tmpl"
+deploy_tmpl_file="templates/azuredeploy.json.tmpl"
+deploy_file="${arm_nfs_dir}/azuredeploy.json"
 
 sed -e "s@VNET_SUBNET@${agent_pool_subnet}@" \
 	${deploy_tmpl_file} > ${deploy_file}
@@ -74,7 +74,8 @@ az group deployment create \
 # FIXME: parameterize "nfssrv" which is in azuredeploy.json.tmpl
 NFS_HOST_IP=$(az vm list-ip-addresses -g $NAME -n nfssrv \
 	--query '[].virtualMachine.network.privateIpAddresses[0]' --out tsv)
-sed -i bootstrap/pv.yaml -e "s/NFS_HOST_IP/${NFS_HOST_IP}/"
+sed -e "s/NFS_HOST_IP/${NFS_HOST_IP}/" templates/pv.yaml.tmpl > \
+	bootstrap/pv.yaml 
 
 _ssh_opts="-i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o User=datahub"
 _host=${NAME}.westus.cloudapp.azure.com
@@ -84,6 +85,6 @@ echo "done waiting"
 
 ssh ${_ssh_opts} ${_host} true
 scp ${_ssh_opts} -r bootstrap/* ${_host}:
-ssh ${_ssh_opts} ${_host} "sudo bash helm-install.bash ${NAME}"
+ssh ${_ssh_opts} ${_host} "sudo bash setup.bash ${NAME}"
 
 ssh ${_ssh_opts} ${_host}
