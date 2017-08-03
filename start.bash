@@ -20,7 +20,11 @@ STORAGE_ACCOUNT=$(echo $NAME | tr -d '_-')
 SSH_KEY=${HOME}/.ssh/az-${NAME}
 SSH_KEY_PUB=${SSH_KEY}.pub
 
-ssh-keygen -t rsa -N '' -f ${SSH_KEY}
+if [ -f ${SSH_KEY} ]; then
+	echo "Using existing ssh key: ${SSH_KEY}"
+else
+	ssh-keygen -t rsa -N '' -f ${SSH_KEY}
+fi
 
 az account set -s ${SUBSCRIPTION_ID}
 
