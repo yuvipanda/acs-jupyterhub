@@ -28,8 +28,10 @@ fi
 
 az account set -s ${SUBSCRIPTION_ID}
 
-az ad sp create-for-rbac --scopes=/subscriptions/${SUBSCRIPTION_ID} \
-	--role=Contributor > rbac.json
+if [ ! -f rbac.json ]; then
+	az ad sp create-for-rbac --scopes=/subscriptions/${SUBSCRIPTION_ID} \
+		--role=Contributor > rbac.json
+fi
 
 client_id="$(jq '.["appId"]' rbac.json)"
 client_secret="$(jq '.["password"]' rbac.json)"
