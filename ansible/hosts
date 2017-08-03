@@ -1,0 +1,8 @@
+[nfs_servers]
+nfs-server-1
+
+[common]
+nfs-server-1
+
+[nfs_clients]
+node[1:3]
