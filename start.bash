@@ -49,12 +49,16 @@ python -m json.tool ${NAME}.json
 acs-engine generate ${NAME}.json
 
 az group create --name ${NAME} --location westus
+
+# Create the agents
 az group deployment create --name ${NAME} --resource-group ${NAME} \
 	--template-file ./_output/${NAME}/azuredeploy.json \
 	--parameters @./_output/${NAME}/azuredeploy.parameters.json
 
+# Find our agent pool subnet
 agent_pool_subnet=$(jq '.["parameters"]["agentpool1Subnet"]["defaultValue"]' _output/${NAME}/azuredeploy.json | xargs)
 
+# Prepare nfs server arm files
 arm_nfs_dir="arm_nfs/${NAME}"
 if [ ! -d ${arm_nfs_dir} ]; then
 	mkdir -p $arm_nfs_dir
@@ -72,6 +76,7 @@ sed -e "s/DNS_NAME/${NAME}-nfs/" \
 	-e "s#KEY_DATA#${key_data}#" \
 	${param_tmpl_file} > ${param_file}
 
+# Create nfs server
 az group deployment create \
     --name ${NAME} \
     --resource-group ${NAME} \
@@ -85,9 +90,6 @@ sed -e "s/NFS_HOST_IP/${NFS_HOST_IP}/" templates/pv.yaml.tmpl > \
 
 _ssh_opts="-i ${SSH_KEY} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o User=datahub"
 _host=${NAME}.westus.cloudapp.azure.com
-echo "wait 90s for ${_host} to become available"
-sleep 90s
-echo "done waiting"
 
 ssh ${_ssh_opts} ${_host} true
 scp ${_ssh_opts} -r bootstrap/* ${_host}:
