@@ -10,8 +10,6 @@ echo 'done waiting'
 helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 helm repo update
 
-sed "s/NAME/${0}/" -i config.yaml
-
 helm install jupyterhub/jupyterhub --version=v0.4 --name=jupyterhub --namespace=jupyterhub -f config.yaml
 
 kubectl apply -f pv.yaml
