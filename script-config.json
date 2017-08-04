@@ -1,0 +1,4 @@
+{
+	"fileUris": ["https://raw.githubusercontent.com/ryanlovett/acs-jupyterhub/master/arm-zpool.sh"],
+	"commandToExecute": "bash arm-zpool.sh"
+}

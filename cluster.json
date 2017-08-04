@@ -28,8 +28,8 @@
       }
     },
     "servicePrincipalProfile": {
-      "servicePrincipalClientID": CLIENT_ID,
-      "servicePrincipalClientSecret": CLIENT_SECRET
+      "servicePrincipalClientID": "CLIENT_ID",
+      "servicePrincipalClientSecret": "CLIENT_SECRET"
     }
   }
 }
