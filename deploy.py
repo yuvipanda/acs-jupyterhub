@@ -32,11 +32,11 @@ ssh_key_pub = ssh_key + '.pub'
 
 if not os.path.exists(ssh_key):
 	cmd = ['ssh-keygen', '-t', 'rsa', '-N', '', '-f', ssh_key]
-	sp.check_output(cmd)
+	r = sp.check_output(cmd)
 ssh_key_data = open(ssh_key_pub).read()
 
 cmd = ['az', 'account', 'set', '-s', args.subscription_id]
-sp.check_output(cmd)
+r = sp.check_output(cmd)
 
 if not os.path.exists(args.rbac):
 	cmd = ['az', 'ad', 'sp', 'create-for-rbac',
@@ -98,7 +98,7 @@ write_json(vm_name + '.json', vm_create.decode())
 
 # create and attach disks
 for i in range(1, args.disks + 1):
-	sp.check_output(['az', 'vm', 'disk', 'attach', '--new',
+	r = sp.check_output(['az', 'vm', 'disk', 'attach', '--new',
 		'--disk', vm_name + '-' + str(i),
 		'--resource-group', args.name,
 		'--vm-name', vm_name,
@@ -137,3 +137,4 @@ r = sp.check_output(cmd)
 # setup the cluster
 cmd = ['ssh'] + ssh_opts + [ssh_host, "sudo bash setup.bash " + args.name]
 r = sp.check_output(cmd)
+print(r.decode().split('\n')[-2])
