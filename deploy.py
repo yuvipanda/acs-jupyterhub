@@ -20,14 +20,14 @@ parser.add_argument('-s', dest='subscription_id', required=True,
 parser.add_argument('-n', dest='name', required=True,
 	help='Cluster name.')
 parser.add_argument('-r', dest='rbac', default='rbac.json',
-    help='Path to Azure service principal json. File will be created if it does not exist. [default=rbac.json].')
+    help='Service principal file, relative to output dir. Will be created if it does not exist. [default=rbac.json].')
 parser.add_argument('-d', dest='disks', type=int, default=4,
 	help='Managed disk count [default=4].')
 parser.add_argument('-D', dest='disk_size', type=int, default=1024,
 	help='Disk size (gb) [default=1024].')
 args = parser.parse_args()
 
-ssh_key = os.path.join(os.environ['HOME'], '.ssh', 'az-' + args.name)
+ssh_key = os.path.join(args.name, 'az-' + args.name)
 ssh_key_pub = ssh_key + '.pub'
 
 if not os.path.exists(ssh_key):
@@ -38,14 +38,15 @@ ssh_key_data = open(ssh_key_pub).read()
 cmd = ['az', 'account', 'set', '-s', args.subscription_id]
 r = sp.check_output(cmd)
 
-if not os.path.exists(args.rbac):
+rbac_file = os.path.join(args.name, args.rbac)
+if not os.path.exists(rbac_file)
 	cmd = ['az', 'ad', 'sp', 'create-for-rbac',
 		'--scopes=/subscriptions/{}'.format(args.subscription_id),
 		'--role=Contributor']
 	rbac_s = sp.check_output(cmd)
-	write_json(args.rbac, rbac)
+	write_json(rbac_file, rbac)
 else:
-	rbac_s = open(args.rbac).read()
+	rbac_s = open(rbac_file).read()
 rbac = json.loads(rbac_s)
 
 cluster = json.loads(open('cluster.json').read())
@@ -56,7 +57,7 @@ cluster['properties']['servicePrincipalProfile']['servicePrincipalClientSecret']
 	rbac["password"]
 cluster['properties']['linuxProfile']['ssh']['publicKeys'][0]['keyData'] = \
 	ssh_key_data
-write_json(args.name + '.json', cluster)
+write_json(os.path.join(args.name, args.name + '.json'), cluster)
 
 cmd = ['acs-engine', 'generate', args.name + '.json']
 r = sp.check_output(cmd)
@@ -94,7 +95,7 @@ cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--location', 'West US',
 	'--image', 'canonical:ubuntuserver:17.04:latest']
 vm_create = sp.check_output(cmd)
-write_json(vm_name + '.json', vm_create.decode())
+write_json(os.path.join(args.name, vm_name + '.json'), vm_create.decode())
 
 # create and attach disks
 for i in range(1, args.disks + 1):

@@ -1,6 +1,8 @@
 #!/bin/bash
+
 set -e
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+
+curl -s -S https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 helm init
 
 echo 'waiting 1m'
