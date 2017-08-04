@@ -63,7 +63,7 @@ agent_pool_subnet_name=$(az network vnet list -g $NAME --query '[].subnets[].nam
 # FIXME: parameterize "nfssrv" which is in azuredeploy.json.tmpl
 VM_NAME="${NAME}-nfssrv"
 az vm create \
-	-n                 ${VMNAME} \
+	-n                 ${VM_NAME} \
 	--admin-username   datahub \
 	--resource-group   ${NAME} \
 	--ssh-key-value    ${SSH_KEY_PUB} \
