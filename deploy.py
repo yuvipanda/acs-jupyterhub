@@ -134,6 +134,7 @@ f.close()
 # prepare to connect to master
 ssh_opts = ['-i', ssh_key, '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-o', 'User=datahub']
 ssh_host = args.name + '.westus.cloudapp.azure.com'
+os.environ['SSH_AUTH_SOCK'] = ''
 
 # verify ssh works
 cmd = ['ssh'] + ssh_opts + [ssh_host, 'true']
@@ -141,6 +142,12 @@ r = sp.check_output(cmd)
 
 # copy bootstrap code/data
 cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/pv.yaml', 'bootstrap/setup.bash', ssh_host + ':']
+r = sp.check_output(cmd)
+
+# copy ssh keys
+cmd = ['scp'] + ssh_opts + [ssh_key,     ssh_host + ':.ssh/id_rsa']
+r = sp.check_output(cmd)
+cmd = ['scp'] + ssh_opts + [ssh_key_pub, ssh_host + ':.ssh/id_rsa.pub']
 r = sp.check_output(cmd)
 
 # setup the cluster

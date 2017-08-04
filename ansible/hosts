@@ -1,8 +1,27 @@
-[nfs_servers]
-nfs-server-1
+#!/usr/bin/python
 
-[common]
-nfs-server-1
+import subprocess as sp
+import json
 
-[nfs_clients]
-k8s-*
+hosts = {}
+
+cmd = ['kubectl', 'get', 'nodes', '-o=jsonpath={.items[*].metadata.name}']
+kube_nodes = sp.check_output(cmd).split()
+
+hosts['nfs_clients'] = {
+    'hosts': kube_nodes,
+    'vars': {
+        'ansible_ssh_private_key_file': '~/.ssh/id_rsa',
+        'ansible_ssh_user': 'datahub'
+    }
+}
+
+hosts['nfs_servers'] = {
+    'hosts': ['10.240.0.14'],
+    'vars': {
+        'ansible_ssh_private_key_file': '~/.ssh/id_rsa',
+        'ansible_ssh_user': 'datahub'
+    }
+}
+print(json.dumps(hosts, indent=4, separators=(',', ': ')))
+

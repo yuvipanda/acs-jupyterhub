@@ -1,29 +1,28 @@
-- hosts: common
+- hosts: nfs_clients
   vars:
-    admin_users:
-      - ryanlovett
-      - yuvipanda
+    nfs_server_ip: 10.240.0.14
+    nfs_server_path: /export/pool0/homes
+    mount_path: /mnt/homes
   tasks:
-    - name: create admin users
-      user:
-        name: "{{ item }}"
-        shell: /bin/bash
-        group: sudo
-      with_items: "{{ admin_users }}"
+    - name: install nfs client packages
+      apt:
+        name: nfs-common
+        state: installed
       become: true
 
-    - name: fetch admin users ssh keys from github
-      authorized_key:
-        user: "{{ item }}"
-        state: present
-        key: "https://github.com/{{ item }}.keys"
-      with_items: "{{ admin_users }}"
+    - name: create mount path
+      file:
+        path: "{{ mount_path }}"
+        state: directory
+        mode: 0111
       become: true
 
-    - name: enable admins to sudo without password
-      lineinfile:
-        path: /etc/sudoers.d/site-admins
-        line: "%sudo ALL=(ALL:ALL) NOPASSWD:ALL"
+    - name: mount nfs filesystem
+      mount:
+        path: "{{ mount_path}}"
+        src: "{{ nfs_server_ip }}:{{ nfs_server_path }}"
+        fstype: nfs
+        state: mounted
       become: true
 
 # This assumes that admin has manually created the pool, but not necessarily
@@ -36,7 +35,7 @@
     nfs_client_subnet: 10.240.0.0/16
     anonuid: 1000
     anongid: 1000
-    mount_path: /pool0/homes
+    mount_path: /export/pool0/homes
     zfs_dataset: pool0/homes
   tasks:
     - name: install zfsutils-linux
@@ -98,29 +97,3 @@
       when: exports_written.changed
       become: true
 
-- hosts: nfs_clients
-  vars:
-    nfs_server_ip: 10.240.255.5
-    nfs_server_path: /pool0/homes
-    mount_path: /mnt/homes
-  tasks:
-    - name: install nfs client packages
-      apt:
-        name: nfs-common
-        state: installed
-      become: true
-
-    - name: create mount path
-      file:
-        path: "{{ mount_path }}"
-        state: directory
-        mode: 0111
-      become: true
-
-    - name: mount nfs filesystem
-      mount:
-        path: "{{ mount_path}}"
-        src: "{{ nfs_server_ip }}:{{ nfs_server_path }}"
-        fstype: nfs
-        state: mounted
-      become: true
