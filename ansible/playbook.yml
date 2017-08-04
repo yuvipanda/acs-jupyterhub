@@ -1,8 +1,6 @@
 - hosts: nfs_clients
-  vars:
-    nfs_server_ip: 10.240.0.14
-    nfs_server_path: /export/pool0/homes
-    mount_path: /mnt/homes
+  vars_files:
+    - vars.yml
   tasks:
     - name: install nfs client packages
       apt:
@@ -20,7 +18,7 @@
     - name: mount nfs filesystem
       mount:
         path: "{{ mount_path}}"
-        src: "{{ nfs_server_ip }}:{{ nfs_server_path }}"
+        src: "{{ nfs_server_ip }}:{{ export_path }}"
         fstype: nfs
         state: mounted
       become: true
@@ -31,12 +29,8 @@
 #   zpool create pool0 mirror /dev/sdc /dev/sdd
 #   zpool    add pool0 mirror /dev/sde /dev/sdf
 - hosts: nfs_servers
-  vars:
-    nfs_client_subnet: 10.240.0.0/16
-    anonuid: 1000
-    anongid: 1000
-    mount_path: /export/pool0/homes
-    zfs_dataset: pool0/homes
+  vars_files:
+    - vars.yml
   tasks:
     - name: install zfsutils-linux
       apt:
@@ -53,7 +47,7 @@
     - name: add mount path to /etc/exports
       lineinfile:
         path: /etc/exports
-        line: "{{ mount_path}} {{ nfs_client_subnet }}(rw,sync,no_subtree_check,all_squash,anonuid={{ anonuid }},anongid={{ anongid }})"
+        line: "{{ export_path }} {{ nfs_client_subnet }}(rw,sync,no_subtree_check,all_squash,anonuid={{ anonuid }},anongid={{ anongid }})"
       register: exports_written
       become: true
 
@@ -78,7 +72,7 @@
 
     - name: create mount path and hub data directory
       file:
-        path: "{{ mount_path }}/datahub"
+        path: "{{ export_path }}/datahub"
         state: directory
         recurse: yes
       become: true
