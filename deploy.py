@@ -7,6 +7,7 @@ import json
 import os
 import subprocess as sp
 import sys
+import yaml
 
 def write_json(filename, data):
 	f = open(filename, 'w')
@@ -28,21 +29,24 @@ args = parser.parse_args()
 
 ssh_key = os.path.join(os.environ['HOME'], '.ssh', 'az-' + args.name)
 ssh_key_pub = ssh_key + '.pub'
-storage_account = args.name.replace('_', '').replace('-', '')
 
 if not os.path.exists(ssh_key):
 	cmd = ['ssh-keygen', '-t', 'rsa', '-N', '', '-f', ssh_key]
-	sp.checkout_output(cmd)
-ssh_key_data = open(ssh_key).read()
+	sp.check_output(cmd)
+ssh_key_data = open(ssh_key_pub).read()
 
 cmd = ['az', 'account', 'set', '-s', args.subscription_id]
-sp.checkout_output(cmd)
+sp.check_output(cmd)
 
 if not os.path.exists(args.rbac):
-	cmd = 'az ad sp create-for-rbac --scopes=/subscriptions/{} --role=Contributor > rbac.json'.format(args.subscription_id)
-	sp.check_output(cmd, shell=True)
-
-rbac = json.loads(open(args.rbac).read())
+	cmd = ['az', 'ad', 'sp', 'create-for-rbac',
+		'--scopes=/subscriptions/{}'.format(args.subscription_id),
+		'--role=Contributor']
+	rbac_s = sp.check_output(cmd)
+	write_json(args.rbac, rbac)
+else:
+	rbac_s = open(args.rbac).read()
+rbac = json.loads(rbac_s)
 
 cluster = json.loads(open('cluster.json').read())
 cluster['properties']['masterProfile']['dnsPrefix'] = args.name
@@ -55,12 +59,12 @@ cluster['properties']['linuxProfile']['ssh']['publicKeys'][0]['keyData'] = \
 write_json(args.name + '.json', cluster)
 
 cmd = ['acs-engine', 'generate', args.name + '.json']
-sp.checkout_output(cmd)
+r = sp.check_output(cmd)
 
 # create resource group
 cmd = ['az', 'group', 'create', '--name', args.name,
 	'--location', 'westus']
-sp.checkout_output(cmd)
+r = sp.check_output(cmd)
 
 # create the agents
 cmd = ['az', 'group', 'deployment', 'create',
@@ -70,7 +74,7 @@ cmd = ['az', 'group', 'deployment', 'create',
 		'./_output/{}/azuredeploy.json'.format(args.name),
 	'--parameters',
 		'@./_output/{}/azuredeploy.parameters.json'.format(args.name)]
-sp.checkout_output(cmd)
+r = sp.check_output(cmd)
 
 # find our agent pool network details
 cmd = ['az', 'network', 'vnet', 'list', '-g', args.name]
@@ -80,7 +84,7 @@ agent_pool_subnet_name = vnet[0]['subnets'][0]['name']
 
 # create nfs server
 vm_name = args.name + '-nfs'
-cmd = ['az', 'vm', 'create', '-n', 'vm_name',
+cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--admin-username', 'datahub',
 	'--resource-group', args.name,
 	'--ssh-key-value', ssh_key_pub,
@@ -90,7 +94,7 @@ cmd = ['az', 'vm', 'create', '-n', 'vm_name',
 	'--location', 'West US',
 	'--image', 'canonical:ubuntuserver:17.04:latest']
 vm_create = sp.check_output(cmd)
-write_json(vm_name + '.json', vm_create)
+write_json(vm_name + '.json', vm_create.decode())
 
 # create and attach disks
 for i in range(1, args.disks + 1):
@@ -98,7 +102,7 @@ for i in range(1, args.disks + 1):
 		'--disk', vm_name + '-' + str(i),
 		'--resource-group', args.name,
 		'--vm-name', vm_name,
-		'--size-gb', args.disk_size,
+		'--size-gb', str(args.disk_size),
 		'--sku', 'Premium_LRS'])
 
 # run install script
@@ -108,7 +112,7 @@ cmd = ['az', 'vm', 'extension', 'set',
 	'--name', 'customScript',
 	'--publisher', 'Microsoft.Azure.Extensions',
 	'--settings', './script-config.json']
-sp.check_output(cmd)
+r = sp.check_output(cmd)
 
 # write out pv.yaml with our nfs server ip
 nfs_host_ip = json.loads(vm_create)['privateIpAddress']
@@ -124,12 +128,12 @@ ssh_host = args.name + '.westus.cloudapp.azure.com'
 
 # verify ssh works
 cmd = ['ssh'] + ssh_opts + [ssh_host, 'true']
-sp.check_output(cmd)
+r = sp.check_output(cmd)
 
 # copy bootstrap code/data
-cmd = ['scp'] + ssh_opts + ['-r', 'bootstrap/*', ssh_host + ':']
-sp.check_output(cmd)
+cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/pv.yaml', 'bootstrap/setup.bash', ssh_host + ':']
+r = sp.check_output(cmd)
 
 # setup the cluster
 cmd = ['ssh'] + ssh_opts + [ssh_host, "sudo bash setup.bash " + args.name]
-sp.check_output(cmd)
+r = sp.check_output(cmd)
