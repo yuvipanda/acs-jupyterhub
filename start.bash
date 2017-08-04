@@ -56,35 +56,39 @@ az group deployment create --name ${NAME} --resource-group ${NAME} \
 	--parameters @./_output/${NAME}/azuredeploy.parameters.json
 
 # Find our agent pool subnet
-agent_pool_subnet=$(jq '.["parameters"]["agentpool1Subnet"]["defaultValue"]' _output/${NAME}/azuredeploy.json | xargs)
+agent_pool_vnet=$(jq '.["parameters"]["agentpool1Subnet"]["defaultValue"]' _output/${NAME}/azuredeploy.json | xargs) # /16
+agent_pool_vnet_name=$(az network vnet list -g $NAME --query '[].name' -o tsv)
+agent_pool_subnet_name=$(az network vnet list -g $NAME --query '[].subnets[].name' -o tsv)
 
-# Prepare nfs server arm files
-arm_nfs_dir="arm_nfs/${NAME}"
-if [ ! -d ${arm_nfs_dir} ]; then
-	mkdir -p $arm_nfs_dir
-fi
-
-param_tmpl_file="templates/azuredeploy.parameters.json.tmpl"
-param_file="${arm_nfs_dir}/azuredeploy.parameters.json"
-deploy_tmpl_file="templates/azuredeploy.json.tmpl"
-deploy_file="${arm_nfs_dir}/azuredeploy.json"
-
-sed -e "s@VNET_SUBNET@${agent_pool_subnet}@" \
-	${deploy_tmpl_file} > ${deploy_file}
-sed -e "s/DNS_NAME/${NAME}-nfs/" \
-	-e "s/STORAGE_ACCOUNT/${STORAGE_ACCOUNT}/" \
-	-e "s#KEY_DATA#${key_data}#" \
-	${param_tmpl_file} > ${param_file}
-
-# Create nfs server
-az group deployment create \
-    --name ${NAME} \
-    --resource-group ${NAME} \
-    --template-file ./${arm_nfs_dir}/azuredeploy.json \
-    --parameters @./${arm_nfs_dir}/azuredeploy.parameters.json
 # FIXME: parameterize "nfssrv" which is in azuredeploy.json.tmpl
-NFS_HOST_IP=$(az vm list-ip-addresses -g $NAME -n nfssrv \
-	--query '[].virtualMachine.network.privateIpAddresses[0]' --out tsv)
+VM_NAME="${NAME}-nfssrv"
+az vm create \
+	-n                 ${VMNAME} \
+	--admin-username   datahub \
+	--resource-group   ${NAME} \
+	--ssh-key-value    ${SSH_KEY_PUB} \
+	--size             Standard_DS13_V2 \
+	--storage-sku      Premium_LRS \
+	--vnet-name        ${agent_pool_vnet_name} \
+	--subnet           ${agent_pool_subnet_name} \
+	--location         "West US" \
+	--image            canonical:ubuntuserver:17.04:latest > \
+		${VM_NAME}.json
+
+for i in {1..4} ; do
+	az vm disk attach --new \
+		--disk ${VM_NAME}-${i} \
+		--resource-group ${NAME} \
+		--vm-name ${VM_NAME} \
+		--size-gb 1 \
+		--sku Premium_LRS
+done
+
+az vm extension set --resource-group ${NAME} --vm-name ${VM_NAME} \
+	--name customScript --publisher Microsoft.Azure.Extensions \
+	--settings ./script-config.json
+
+NFS_HOST_IP=$(jq .privateIpAddress ${VM_NAME}.json | xargs)
 sed -e "s/NFS_HOST_IP/${NFS_HOST_IP}/" templates/pv.yaml.tmpl > \
 	bootstrap/pv.yaml 
 
