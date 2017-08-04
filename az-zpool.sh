@@ -78,9 +78,3 @@ for (( i=2; i<${num_disks} ; i+=2 )) ; do
 	fi
 	zpool add pool0 mirror ${disks[i]} ${disks[i+1]}
 done
-
-apt-get install --yes nfs-kernel-server
-echo '/export/homes 10.240.0.0/16(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)' > /etc/exports
-mkdir -p /export/homes/datahub
-chown -R 1000:1000 /export
-exportfs -a
