@@ -27,7 +27,13 @@ parser.add_argument('-D', dest='disk_size', type=int, default=1024,
 	help='Disk size (gb) [default=1024].')
 args = parser.parse_args()
 
-ssh_key = os.path.join(args.name, 'az-' + args.name)
+if not os.path.exists(args.name):
+	os.mkdir(args.name)
+elif not os.path.isdir(args.name):
+	print(args.name + " exists and is not a directory.")
+	sys.exit(1)
+
+ssh_key = os.path.join(args.name, 'id_rsa-' + args.name)
 ssh_key_pub = ssh_key + '.pub'
 
 if not os.path.exists(ssh_key):
@@ -39,12 +45,14 @@ cmd = ['az', 'account', 'set', '-s', args.subscription_id]
 r = sp.check_output(cmd)
 
 rbac_file = os.path.join(args.name, args.rbac)
-if not os.path.exists(rbac_file)
+if not os.path.exists(rbac_file):
 	cmd = ['az', 'ad', 'sp', 'create-for-rbac',
 		'--scopes=/subscriptions/{}'.format(args.subscription_id),
 		'--role=Contributor']
-	rbac_s = sp.check_output(cmd)
-	write_json(rbac_file, rbac)
+	rbac_s = sp.check_output(cmd).decode()
+	f = open(rbac_file, 'w')
+	f.write(rbac_s)
+	f.close()
 else:
 	rbac_s = open(rbac_file).read()
 rbac = json.loads(rbac_s)
@@ -59,7 +67,7 @@ cluster['properties']['linuxProfile']['ssh']['publicKeys'][0]['keyData'] = \
 	ssh_key_data
 write_json(os.path.join(args.name, args.name + '.json'), cluster)
 
-cmd = ['acs-engine', 'generate', args.name + '.json']
+cmd = ['acs-engine', 'generate', os.path.join(args.name, args.name + '.json')]
 r = sp.check_output(cmd)
 
 # create resource group
