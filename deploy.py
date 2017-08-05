@@ -95,7 +95,7 @@ agent_pool_subnet_name = vnet[0]['subnets'][0]['name']
 agent_pool_subnet_address_prefix = vnet[0]['subnets'][0]['addressPrefix']
 
 # create nfs server
-vm_name = 'nfs_server'
+vm_name = 'nfsserver'
 cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--admin-username', 'datahub',
 	'--resource-group', args.name,
@@ -129,16 +129,10 @@ r = sp.check_output(cmd)
 # write out pv.yaml and vars.yml with our network/nfs info
 nfs_host_ip = json.loads(vm_create)['privateIpAddress']
 
-pv = list(yaml.load_all(open('templates/pv.yaml.tmpl').read()))
-pv[1]['spec']['nfs']['server'] = nfs_host_ip
-f = open('bootstrap/pv.yaml', 'w')
-f.write(yaml.dump_all(pv, default_flow_style=False))
-f.close()
-
 ansible_vars = yaml.load(open('templates/vars.yml.tmpl').read())
 ansible_vars['nfs_client_subnet'] = agent_pool_subnet_address_prefix
 ansible_vars['nfs_server_ip'] = nfs_host_ip
-f = open('ansible/pv.yml', 'w')
+f = open('ansible/vars.yml', 'w')
 f.write(yaml.dump(ansible_vars, default_flow_style=False))
 f.close()
 
@@ -152,17 +146,13 @@ cmd = ['ssh'] + ssh_opts + [ssh_host, 'true']
 r = sp.check_output(cmd)
 
 # copy ansible and bootstrap code/data
-cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/pv.yaml', 'bootstrap/setup.bash', 'ansible/hosts', 'ansible/playbook.yml', ssh_host + ':']
+cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/setup.bash', 'bootstrap/.ansible.cfg', 'ansible/hosts', 'ansible/playbook.yml', 'ansible/vars.yml', ssh_host + ':']
 r = sp.check_output(cmd)
 
 # copy ssh keys
 cmd = ['scp'] + ssh_opts + [ssh_key,     ssh_host + ':.ssh/id_rsa']
 r = sp.check_output(cmd)
 cmd = ['scp'] + ssh_opts + [ssh_key_pub, ssh_host + ':.ssh/id_rsa.pub']
-r = sp.check_output(cmd)
-
-# run ansible
-cmd = ['ssh'] + ssh_opts + [ssh_host, 'ansible-playbook', '-i', 'hosts', 'playbook.yml']
 r = sp.check_output(cmd)
 
 # setup the cluster
