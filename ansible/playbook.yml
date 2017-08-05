@@ -59,6 +59,7 @@
         recurse: yes
         owner: "{{ anongid }}"
         group: "{{ anongid }}"
+        mode: 0755
       become: true
 
     - name: export filesystem
@@ -80,7 +81,7 @@
       file:
         path: "{{ mount_path }}"
         state: directory
-        mode: 0111
+        mode: 0755
       become: true
 
     - name: mount nfs filesystem
