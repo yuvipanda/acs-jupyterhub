@@ -1,30 +1,20 @@
 # acs-jupyterhub
-Set up a JupyterHub with ACS
+Set up a JupyterHub on Azure
 
 1. Prerequisites:
-    - [acs-engine](https://github.com/Azure/acs-engine/blob/master/docs/acsengine.md)
-        1. Install golang
-        2. export GOPATH=${HOME}/go
-        3. go get github.com/Azure/acs-engine
-        4. go get all
-        5. cd ${GOPATH}/src/github.com/Azure/acs-engine
-        6. go build
-        7. Add ${GOPATH}/src/github.com/Azure/acs-engine to PATH.
+    - [acs-engine](https://github.com/Azure/acs-engine/releases)
     - [azure-cli](https://github.com/Azure/azure-cli)
-    - [jq](https://stedolan.github.io/jq/)
 1. Clone this repo
    `git clone https://github.com/yuvipanda/acs-jupyterhub`
    `cd acs-jupyterhub`
-1. Create a service account, saving the `az` output.
-   `az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" > rbac.json`
 1. Login with az
    `az login`
-   Identify your subscription and make it active.
-   `az account set -s your-subscription-id-...`
+   and identify the subscription you want to use.
 1. Create the cluster:
-   `./start.bash <SOME_UNIQUE_CLUSTER_NAME> <PATH_TO_SSH_PUB_KEY>`
+   `./deploy.py -s <SOME_SUBSCRIPTION_ID> -n <A_DEPLOYMENT_NAME>`
    For example:
-   `./start.bash course-term-1 ~/.ssh/id_rsa.pub`
+   `./deploy.py -s da9b666d-5293-4048-8436-43c408e19eca -n my-course-1`
+   This takes about 20 minutes and will output the IP address of the JupyterHub proxy.
 
 ## Scaling up
 
