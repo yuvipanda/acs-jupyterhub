@@ -33,7 +33,7 @@ elif not os.path.isdir(args.name):
 	sys.exit(1)
 
 # create an ssh keypair
-ssh_key = os.path.join(args.name, 'id_rsa-' + args.name)
+ssh_key = os.path.join(args.name, 'id_rsa')
 ssh_key_pub = ssh_key + '.pub'
 if not os.path.exists(ssh_key):
 	cmd = ['ssh-keygen', '-t', 'rsa', '-N', '', '-f', ssh_key]
@@ -150,9 +150,7 @@ cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/setup.bash', 'bo
 r = sp.check_output(cmd)
 
 # copy ssh keys
-cmd = ['scp'] + ssh_opts + [ssh_key,     ssh_host + ':.ssh/id_rsa']
-r = sp.check_output(cmd)
-cmd = ['scp'] + ssh_opts + [ssh_key_pub, ssh_host + ':.ssh/id_rsa.pub']
+cmd = ['scp'] + ssh_opts + [ssh_key, ssh_key_pub, ssh_host + ':.ssh/']
 r = sp.check_output(cmd)
 
 # setup the cluster
