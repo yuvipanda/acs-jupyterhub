@@ -1,28 +1,3 @@
-- hosts: nfs_clients
-  vars_files:
-    - vars.yml
-  tasks:
-    - name: install nfs client packages
-      apt:
-        name: nfs-common
-        state: installed
-      become: true
-
-    - name: create mount path
-      file:
-        path: "{{ mount_path }}"
-        state: directory
-        mode: 0111
-      become: true
-
-    - name: mount nfs filesystem
-      mount:
-        path: "{{ mount_path}}"
-        src: "{{ nfs_server_ip }}:{{ export_path }}"
-        fstype: nfs
-        state: mounted
-      become: true
-
 # This assumes that admin has manually created the pool, but not necessarily
 # the filesystem. For ~ RAID10 on 4 disks:
 #   for d in c d e f ; do parted /dev/sd${d} mklabel gpt ; done
@@ -91,3 +66,27 @@
       when: exports_written.changed
       become: true
 
+- hosts: nfs_clients
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: install nfs client packages
+      apt:
+        name: nfs-common
+        state: installed
+      become: true
+
+    - name: create mount path
+      file:
+        path: "{{ mount_path }}"
+        state: directory
+        mode: 0111
+      become: true
+
+    - name: mount nfs filesystem
+      mount:
+        path: "{{ mount_path}}"
+        src: "{{ nfs_server_ip }}:{{ export_path }}"
+        fstype: nfs
+        state: mounted
+      become: true
