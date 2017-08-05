@@ -7,12 +7,16 @@ function proxy_public_ip {
 		grep proxy-public | awk '{ print $3; }'
 }
 
-# run ansible
-add-apt-repository -y ppa:ansible/ansible
-apt update > /dev/null
-apt -y install ansible
+# install and run ansible
+{
+	export DEBIAN_PRIORITY=high DEBIAN_FRONTEND=noninteractive
+	add-apt-repository -y ppa:ansible/ansible
+	apt-get update
+	apt-get -y install ansible
+} > /dev/null
 sudo -u datahub -H ansible-playbook -i hosts playbook.yml
 
+# install helm and jupyterhub
 curl -s -S https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 helm init
 
@@ -27,6 +31,7 @@ helm install jupyterhub/jupyterhub --version=v0.4 \
 	--name=jupyterhub --namespace=jupyterhub -f \
 	config.yaml
 
+# get our public ip
 PUBLIC_IP=$(proxy_public_ip)
 while [ "${PUBLIC_IP}" == '<pending>' ]; do
     PUBLIC_IP=$(proxy_public_ip)
