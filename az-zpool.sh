@@ -78,6 +78,3 @@ for (( i=2; i<${num_disks} ; i+=2 )) ; do
 	fi
 	zpool add pool0 mirror ${disks[i]} ${disks[i+1]}
 done
-
-add-apt-repository -y ppa:ansible/ansible
-apt install ansible
