@@ -45,9 +45,9 @@
       when: item.name == zfs_dataset and item.mounted != "yes"
       become: true
 
-    - name: create mount path and hub data directory
+    - name: create mount path directory
       file:
-        path: "{{ export_path }}/datahub"
+        path: "{{ export_path }}"
         state: directory
         recurse: yes
       become: true
@@ -87,7 +87,7 @@
     - name: mount nfs filesystem
       mount:
         path: "{{ mount_path}}"
-        src: "{{ nfs_server_ip }}:{{ export_path }}"
+        src: "{{ nfs_server_host }}:{{ export_path }}"
         fstype: nfs
         opts: "{{ mount_options }}"
         state: mounted

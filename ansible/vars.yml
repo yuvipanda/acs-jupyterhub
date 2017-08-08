@@ -6,5 +6,5 @@ link_basename: homes
 mount_path: /mnt/homes
 mount_options: soft,timeo=100,nosuid
 nfs_client_subnet: 10.240.0.0/16
-nfs_server_ip: 10.240.0.14
+nfs_server_host: nfsserver
 zfs_dataset: pool0/homes
