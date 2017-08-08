@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import argparse
 import json
@@ -50,7 +50,7 @@ if not os.path.exists(rbac_file):
 	cmd = ['az', 'ad', 'sp', 'create-for-rbac',
 		'--scopes=/subscriptions/{}'.format(args.subscription_id),
 		'--role=Contributor']
-	rbac_s = sp.check_output(cmd).decode()
+	rbac_s = sp.check_output(cmd, universal_newlines=True)
 	f = open(rbac_file, 'w')
 	f.write(rbac_s)
 	f.close()
@@ -75,7 +75,7 @@ r = sp.check_output(cmd)
 
 # create resource group
 cmd = ['az', 'group', 'create', '--name', args.name, '--location', 'westus2']
-r = sp.check_output(cmd)
+r = sp.check_output(cmd, universal_newlines=True)
 
 # create the agents
 cmd = ['az', 'group', 'deployment', 'create',
@@ -85,11 +85,11 @@ cmd = ['az', 'group', 'deployment', 'create',
 		'./_output/{}/azuredeploy.json'.format(args.name),
 	'--parameters',
 		'@./_output/{}/azuredeploy.parameters.json'.format(args.name)]
-r = sp.check_output(cmd)
+r = sp.check_output(cmd, universal_newlines=True)
 
 # find our agent pool network details
 cmd = ['az', 'network', 'vnet', 'list', '-g', args.name]
-vnet = json.loads(sp.check_output(cmd))
+vnet = json.loads(sp.check_output(cmd, universal_newlines=True))
 agent_pool_vnet_name = vnet[0]['name']
 agent_pool_subnet_name = vnet[0]['subnets'][0]['name']
 agent_pool_subnet_address_prefix = vnet[0]['subnets'][0]['addressPrefix']
@@ -105,8 +105,8 @@ cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--subnet', agent_pool_subnet_name,
 	'--location', 'West US 2',
 	'--image', 'canonical:ubuntuserver:17.04:latest']
-vm_create = sp.check_output(cmd)
-write_json(os.path.join(args.name, vm_name + '.json'), vm_create.decode())
+vm_create = sp.check_output(cmd, universal_newlines=True)
+write_json(os.path.join(args.name, vm_name + '.json'), vm_create)
 
 # create and attach disks
 for i in range(1, args.disks + 1):
@@ -124,7 +124,7 @@ cmd = ['az', 'vm', 'extension', 'set',
 	'--name', 'customScript',
 	'--publisher', 'Microsoft.Azure.Extensions',
 	'--settings', './script-config.json']
-r = sp.check_output(cmd)
+r = sp.check_output(cmd, universal_newlines=True)
 
 # write out pv.yaml and vars.yml with our network/nfs info
 nfs_host_ip = json.loads(vm_create)['privateIpAddress']
@@ -143,17 +143,16 @@ os.environ['SSH_AUTH_SOCK'] = ''
 
 # verify ssh works
 cmd = ['ssh'] + ssh_opts + [ssh_host, 'true']
-r = sp.check_output(cmd)
+sp.check_call(cmd)
 
 # copy ansible and bootstrap code/data
 cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/setup.bash', 'bootstrap/.ansible.cfg', 'ansible/hosts', 'ansible/playbook.yml', 'ansible/vars.yml', ssh_host + ':']
-r = sp.check_output(cmd)
+sp.check_call(cmd)
 
 # copy ssh keys
 cmd = ['scp'] + ssh_opts + [ssh_key, ssh_key_pub, ssh_host + ':.ssh/']
-r = sp.check_output(cmd)
+sp.check_call(cmd)
 
 # setup the cluster
 cmd = ['ssh'] + ssh_opts + [ssh_host, "sudo bash setup.bash " + args.name]
-r = sp.check_output(cmd)
-print(r.decode().split('\n')[-2])
+sp.check_call(cmd)
