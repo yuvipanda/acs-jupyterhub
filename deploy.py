@@ -100,10 +100,10 @@ cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--admin-username', 'datahub',
 	'--resource-group', args.name,
 	'--ssh-key-value', ssh_key_pub,
-	'--size', 'Standard_DS13_V2', '--storage-sku', 'Premium_LRS',
+	'--size', 'Standard_E4s_v3', '--storage-sku', 'Premium_LRS',
 	'--vnet-name', agent_pool_vnet_name,
 	'--subnet', agent_pool_subnet_name,
-	'--location', 'West US',
+	'--location', 'West US 2',
 	'--image', 'canonical:ubuntuserver:17.04:latest']
 vm_create = sp.check_output(cmd)
 write_json(os.path.join(args.name, vm_name + '.json'), vm_create.decode())
