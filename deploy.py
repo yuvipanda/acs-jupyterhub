@@ -74,7 +74,7 @@ cmd = ['acs-engine', 'generate', os.path.join(args.name, 'cluster.json')]
 r = sp.check_output(cmd)
 
 # create resource group
-cmd = ['az', 'group', 'create', '--name', args.name, '--location', 'westus']
+cmd = ['az', 'group', 'create', '--name', args.name, '--location', 'westus2']
 r = sp.check_output(cmd)
 
 # create the agents
@@ -138,7 +138,7 @@ f.close()
 
 # prepare to connect to master
 ssh_opts = ['-i', ssh_key, '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-o', 'User=datahub']
-ssh_host = args.name + '.westus.cloudapp.azure.com'
+ssh_host = args.name + '.westus2.cloudapp.azure.com'
 os.environ['SSH_AUTH_SOCK'] = ''
 
 # verify ssh works
