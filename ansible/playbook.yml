@@ -89,5 +89,19 @@
         path: "{{ mount_path}}"
         src: "{{ nfs_server_ip }}:{{ export_path }}"
         fstype: nfs
+        opts: "{{ mount_options }}"
         state: mounted
+      become: true
+
+    - name: make /data
+      file:
+        state: directory
+        path: "{{ link_dirname }}"
+      become: true
+
+    - name: make symlink to /data/homes
+      file:
+        path: "{{ link_dirname }}/{{ link_basename }}"
+        src: "{{ mount_path }}"
+        state: link
       become: true

@@ -22,4 +22,4 @@ singleuser:
     guarantee: 64M
   storage:
     type: hostPath
-    homeHostPathTemplate: "/mnt/homes/{userid}"
+    homeHostPathTemplate: "/data/homes/{userid}"
