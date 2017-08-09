@@ -129,13 +129,6 @@ r = sp.check_output(cmd, universal_newlines=True)
 # write out pv.yaml and vars.yml with our network/nfs info
 nfs_host_ip = json.loads(vm_create)['privateIpAddress']
 
-ansible_vars = yaml.load(open('templates/vars.yml.tmpl').read())
-ansible_vars['nfs_client_subnet'] = agent_pool_subnet_address_prefix
-ansible_vars['nfs_server_ip'] = nfs_host_ip
-f = open('ansible/vars.yml', 'w')
-f.write(yaml.dump(ansible_vars, default_flow_style=False))
-f.close()
-
 # prepare to connect to master
 ssh_opts = ['-i', ssh_key, '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-o', 'User=datahub']
 ssh_host = args.name + '.westus2.cloudapp.azure.com'
@@ -145,8 +138,12 @@ os.environ['SSH_AUTH_SOCK'] = ''
 cmd = ['ssh'] + ssh_opts + [ssh_host, 'true']
 sp.check_call(cmd)
 
-# copy ansible and bootstrap code/data
-cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/setup.bash', 'bootstrap/.ansible.cfg', 'ansible/hosts', 'ansible/playbook.yml', 'ansible/vars.yml', ssh_host + ':']
+# copy bootstrap code/data
+cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/setup.bash', ssh_host + ':']
+sp.check_call(cmd)
+
+# copy ansible playbook
+cmd = ['ssh'] + ssh_opts + [ssh_host, "git clone https://github.com/berkeley-dsep-infra/k8s-nfs-ansible.git"]
 sp.check_call(cmd)
 
 # copy ssh keys

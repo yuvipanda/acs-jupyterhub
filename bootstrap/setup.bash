@@ -14,7 +14,10 @@ function proxy_public_ip {
 	apt-get update
 	apt-get -y install ansible
 } > /dev/null
-sudo -u datahub -H ansible-playbook -i hosts playbook.yml
+(
+	cd k8s-nfs-ansible
+	sudo -u datahub -H ansible-playbook -i hosts playbook.yml
+)
 
 # install helm and jupyterhub
 curl -s -S https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
