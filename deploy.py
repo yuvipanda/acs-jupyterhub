@@ -139,7 +139,7 @@ cmd = ['ssh'] + ssh_opts + [ssh_host, 'true']
 sp.check_call(cmd)
 
 # copy bootstrap code/data
-cmd = ['scp'] + ssh_opts + ['bootstrap/config.yaml', 'bootstrap/setup.bash', ssh_host + ':']
+cmd = ['scp'] + ssh_opts + ['-r', 'bootstrap', ssh_host + ':']
 sp.check_call(cmd)
 
 # copy ansible playbook
@@ -151,5 +151,5 @@ cmd = ['scp'] + ssh_opts + [ssh_key, ssh_key_pub, ssh_host + ':.ssh/']
 sp.check_call(cmd)
 
 # setup the cluster
-cmd = ['ssh'] + ssh_opts + [ssh_host, "sudo bash setup.bash " + args.name]
+cmd = ['ssh'] + ssh_opts + [ssh_host, "sudo bash bootstrap/setup.bash " + args.name]
 sp.check_call(cmd)
