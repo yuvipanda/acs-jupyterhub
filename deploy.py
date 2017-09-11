@@ -146,6 +146,10 @@ sp.check_call(cmd)
 cmd = ['ssh'] + ssh_opts + [ssh_host, "git clone https://github.com/berkeley-dsep-infra/k8s-nfs-ansible.git"]
 sp.check_call(cmd)
 
+# move .ansible.cfg into place
+cmd = ['ssh'] + ssh_opts + [ssh_host, "mv bootstrap/.ansible.cfg ."]
+sp.check_call(cmd)
+
 # copy ssh keys
 cmd = ['scp'] + ssh_opts + [ssh_key, ssh_key_pub, ssh_host + ':.ssh/']
 sp.check_call(cmd)
