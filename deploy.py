@@ -61,10 +61,8 @@ rbac = json.loads(rbac_s)
 # create acs-engine cluster file
 cluster = json.loads(open('templates/cluster.json.tmpl').read())
 cluster['properties']['masterProfile']['dnsPrefix'] = args.name
-cluster['properties']['servicePrincipalProfile']['servicePrincipalClientID'] = \
-	rbac["appId"]
-cluster['properties']['servicePrincipalProfile']['servicePrincipalClientSecret'] = \
-	rbac["password"]
+cluster['properties']['servicePrincipalProfile']['ClientID'] = rbac["appId"]
+cluster['properties']['servicePrincipalProfile']['Secret']   = rbac["password"]
 cluster['properties']['linuxProfile']['ssh']['publicKeys'][0]['keyData'] = \
 	ssh_key_data
 write_json(os.path.join(args.name, 'cluster.json'), cluster)
