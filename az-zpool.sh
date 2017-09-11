@@ -56,7 +56,10 @@ done
 
 # Main
 case `uname -v` in
-	*buntu*) apt -y install zfsutils-linux ;;
+	*buntu*)
+		apt update
+		apt -y install zfsutils-linux
+		;;
 esac
 
 # Get device list
