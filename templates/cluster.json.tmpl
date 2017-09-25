@@ -22,16 +22,13 @@
     "masterProfile": {
       "count": 1,
       "dnsPrefix": "DNSPREFIX",
-      "vmSize": "Standard_E2s_v3",
-      "OSDiskSizeGB": 100
+      "vmSize": "Standard_E2s_v3"
     },
     "agentPoolProfiles": [
       {
         "name": "pool1",
         "count": 2,
         "vmSize": "Standard_E4s_v3",
-        "storageProfile" : "ManagedDisks",
-        "OSDiskSizeGB": 100,
         "availabilityProfile": "AvailabilitySet"
       }
     ],
