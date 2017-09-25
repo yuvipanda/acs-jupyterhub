@@ -83,7 +83,7 @@ cmd = ['az', 'group', 'deployment', 'create',
 		'./_output/{}/azuredeploy.json'.format(args.name),
 	'--parameters',
 		'@./_output/{}/azuredeploy.parameters.json'.format(args.name)]
-r = sp.check_output(cmd, universal_newlines=True)
+r = sp.check_output(cmd, universal_newlines=True) 
 
 # find our agent pool network details
 cmd = ['az', 'network', 'vnet', 'list', '-g', args.name]
