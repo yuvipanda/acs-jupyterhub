@@ -102,7 +102,7 @@ cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--vnet-name', agent_pool_vnet_name,
 	'--subnet', agent_pool_subnet_name,
 	'--location', 'West US 2',
-	'--image', 'canonical:ubuntuserver:17.04:latest']
+	'--image', 'canonical:ubuntuserver:17.10:latest']
 vm_create = sp.check_output(cmd, universal_newlines=True)
 write_json(os.path.join(args.name, vm_name + '.json'), vm_create)
 
