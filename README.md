@@ -1,3 +1,7 @@
+# NOTE: THIS IS A SERIES OF SCRIPTS THAT MAY OR MAY NOT WORK FOR YOU! I DO NOT HAVE THE BANDWIDTH TO ANSWER QUESTIONS HERE, UNFORTUNATELY. 
+
+Consider using [AKS](https://docs.microsoft.com/en-us/azure/aks/) instead.
+
 # acs-jupyterhub
 Set up a JupyterHub on Azure
 
