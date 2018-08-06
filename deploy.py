@@ -102,7 +102,7 @@ cmd = ['az', 'vm', 'create', '-n', vm_name,
 	'--vnet-name', agent_pool_vnet_name,
 	'--subnet', agent_pool_subnet_name,
 	'--location', 'West US 2',
-	'--image', 'canonical:ubuntuserver:17.10:latest']
+	'--image', 'Canonical:UbuntuServer:18.04-LTS:18.04.201807240']
 vm_create = sp.check_output(cmd, universal_newlines=True)
 write_json(os.path.join(args.name, vm_name + '.json'), vm_create)
 
@@ -128,7 +128,7 @@ r = sp.check_output(cmd, universal_newlines=True)
 nfs_host_ip = json.loads(vm_create)['privateIpAddress']
 
 # prepare to connect to master
-ssh_opts = ['-i', ssh_key, '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-o', 'User=datahub']
+ssh_opts = ['-i', ssh_key, '-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no', '-o', 'User=datahub', '-o', 'ForwardX11=no']
 ssh_host = args.name + '.westus2.cloudapp.azure.com'
 os.environ['SSH_AUTH_SOCK'] = ''
 
@@ -145,11 +145,17 @@ cmd = ['ssh'] + ssh_opts + [ssh_host, "git clone https://github.com/berkeley-dse
 sp.check_call(cmd)
 
 # move .ansible.cfg into place
-cmd = ['ssh'] + ssh_opts + [ssh_host, "mv bootstrap/.ansible.cfg ."]
+cmd = ['ssh'] + ssh_opts + [ssh_host, "cp -p bootstrap/.ansible.cfg ."]
 sp.check_call(cmd)
 
 # copy ssh keys
 cmd = ['scp'] + ssh_opts + [ssh_key, ssh_key_pub, ssh_host + ':.ssh/']
+sp.check_call(cmd)
+
+# register nfsserver
+cmd = ['ssh'] + ssh_opts + [ssh_host, "echo {} nfsserver | sudo tee -a /etc/hosts".format(nfs_host_ip)]
+sp.check_call(cmd)
+cmd = ['ssh'] + ssh_opts + [ssh_host, "echo nfs_server_ip: {} | tee -a k8s-nfs-ansible/vars.yml".format(nfs_host_ip)]
 sp.check_call(cmd)
 
 # setup the cluster
